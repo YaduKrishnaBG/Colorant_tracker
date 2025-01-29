@@ -20,12 +20,10 @@ socketio = SocketIO(app)  # Initialize SocketIO for real-time communication
 
 # Configuration for MySQL database connection
 db_config = {
-    'host': '10.0.60.30',
-    'user': 'colorant',
-    'password': 'C0l0r@nt*66',
-    'db': 'colorant_tracker',
-    'charset': 'utf8mb4',
-    'cursorclass': pymysql.cursors.DictCursor
+    'host': 'localhost',
+    'user': 'root',
+    'password': '',
+    'db': 'colorant_tracker'
 }
 
 @app.route('/weights', methods=['POST'])
