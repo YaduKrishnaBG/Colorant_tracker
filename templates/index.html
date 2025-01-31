@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Colorant Usage Tracker</title>
+    <style>
+        /* Reset default browser styles (optional) */
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Body styling: remove default margin, add background color */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f4f4; /* Slight gray background */
+        }
+
+        /* Center everything in a container */
+        .container {
+            max-width: 500px; /* Adjust as needed */
+            margin: 0 auto;   /* This centers the container horizontally */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centers items vertically in the column layout */
+            padding: 2rem;
+        }
+
+        h1 {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        /* Form styling: white background, box shadow, padding, etc. */
+        form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            max-width: 300px; /* Keep your original form width limit if desired */
+        }
+
+        label {
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        select,
+        input[type="text"] {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            background: #28a745;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        .flash-messages {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        /* Scale reading display */
+        .scale-reading {
+            margin-top: 0.2rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: blue;
+            border: 2px solid blue;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #f0f8ff;
+            margin-bottom: 0.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Colorant Usage Tracker</h1>
+
+        <!-- Colorant Usage Form -->
+        <form method="POST" action="/">
+            <!-- Dropdown to select the machine -->
+            <label for="machine">Select Machine</label>
+            <select name="machine" id="machine" required>
+                <option value="" disabled selected>Select the machine</option>
+                <!-- Dynamically generate machine options IM101 to IM129 -->
+                {% for i in range(101, 130) %}
+                <option value="IM{{i}}">IM{{i}}</option>
+                {% endfor %}
+                <!-- Additional machine options -->
+                <option value="BM001">BM001</option>
+                <option value="BM002">BM002</option>
+                <option value="BM003">BM003</option>
+                <option value="BM004">BM004</option>
+                <option value="BM005">BM005</option>
+                <option value="BM007">BM007</option>
+                <option value="BM008">BM008</option>
+                <option value="BM051">BM051</option>
+                <option value="BM052">BM052</option>
+                <option value="BM053">BM053</option>
+                <option value="BM054">BM054</option>
+            </select>
+
+            <!-- Input field for colorant name -->
+            <label for="colorant_name">Colorant Name</label>
+            <input 
+                type="text" 
+                name="colorant_name" 
+                id="colorant_name" 
+                placeholder="Scan or type colorant name" 
+                required
+                list="colorant-options"
+            />
+            <!-- The datalist provides the dropdown suggestions -->
+            <datalist id="colorant-options">
+                <!-- Add your 300 colorant codes as <option> values here -->
+                <option value="P0011">
+                <option value="P0013">
+                <option value="P0015">
+                <option value="P0020">
+                <option value="P0021">
+                <option value="P0023">
+                <!-- ... continue adding all valid colorants ... -->
+            </datalist>
+
+            <!-- Display the latest weight from the scale -->
+            <label for="scale-value">Weight in Pounds</label>
+            <div class="scale-reading">
+                <span id="scale-value">No data</span>
+            </div>
+
+            <!-- Hidden input to store the scale weight for form submission -->
+            <input type="hidden" name="weight" id="hiddenWeight" />
+
+            <!-- Submit button -->
+            <button type="submit">Submit</button>
+        </form>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages" id="flash-messages"
+             style="display: inline-block; background: #d4edda; color: #ecf007;
+             padding: 8px 80px; border: 1px solid #c3e6cb; border-radius: 4px; 
+             font-size: 14px; margin-top: 25px;">
+            {% for message in messages %}
+                <span>{{ message }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            /*******************************************************************
+             * 1. AUTO-HIDE FLASH MESSAGES AFTER 1 SECOND
+             ******************************************************************/
+            setTimeout(() => {
+                const flashMessages = document.getElementById('flash-messages');
+                if (flashMessages) {
+                    flashMessages.style.display = 'none';
+                }
+            }, 1000);
+
+            /*******************************************************************
+             * 2. POLL THE LATEST SCALE WEIGHT EVERY 1 SECOND
+             *    AND UPDATE THE <span> + HIDDEN INPUT
+             ******************************************************************/
+            function updateScaleWeight() {
+                fetch('/weights/latest')
+                    .then(res => res.json())
+                    .then(data => {
+                        const scaleValueElem = document.getElementById('scale-value');
+                        const hiddenWeightElem = document.getElementById('hiddenWeight');
+                        
+                        // Update the display and hidden input based on the fetched weight
+                        if (data.weight === null || data.weight === 'No data') {
+                            scaleValueElem.textContent = 'No data';
+                            hiddenWeightElem.value = '';
+                        } else {
+                            scaleValueElem.textContent = data.weight;
+                            hiddenWeightElem.value = data.weight;
+                        }
+                    })
+                    .catch(err => console.error('Error fetching weight:', err));
+            }
+
+            // Start polling the server every 1 second
+            setInterval(updateScaleWeight, 1000);
+
+            /*******************************************************************
+             * 3. BARCODE (KEYBOARD) LOGIC
+             *    - Automatically direct all keystrokes to the "colorant_name" field
+             ******************************************************************/
+            const colorantField = document.getElementById('colorant_name');
+
+            // Redirect keystrokes to the colorant_name field if it's not focused
+            document.addEventListener('keydown', (e) => {
+                // Clear the field if it already has 5 characters
+                if (colorantField.value.length === 5) {
+                    colorantField.value = '';
+                }
+                // Focus the colorant_name field if it's not already focused
+                if (document.activeElement !== colorantField) {
+                    colorantField.focus();
+                }
+            });
+
+            // Enforce a maximum length of 5 characters for the colorant_name field
+            colorantField.addEventListener('input', () => {
+                const maxLength = 5; // Adjust if barcodes are longer
+                if (colorantField.value.length > maxLength) {
+                    colorantField.value = colorantField.value.slice(0, maxLength);
+                }
+            });
+
+            /*******************************************************************
+             * 4. FINAL CHECK: ONLY ALLOW SUBMISSION IF COLORANT IS IN THE LIST
+             ******************************************************************/
+            // Mirror the same colorant codes used in the <datalist>
+            const validColorants = [
+                "P0011", "P0013", "P0015", "P0020", "P0021", "P0023",
+                // ... the same 300 codes as in the datalist ...
+            ];
+
+            const form = document.querySelector('form');
+            form.addEventListener('submit', (e) => {
+                const userInput = colorantField.value.trim().toUpperCase();
+                if (!validColorants.includes(userInput)) {
+                    e.preventDefault();
+                    alert('Invalid colorant name. Please select a valid colorant from the list.');
+                    colorantField.focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
