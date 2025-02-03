@@ -7,7 +7,7 @@ Dim conn, rs, sql
 Dim machineID, colorant, weight, dateTime
 
 Dim connectionString
-connectionString = "DSN=ColorantTrackerDSN1;" 
+connectionString = "DSN=Name_of_your_DSN;" 
 ' ^ Adjust user (Uid=...) and password (Pwd=...) if your DSN does not store them.
 
 ' Create ADODB connection
