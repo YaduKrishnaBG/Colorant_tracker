@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Colorant Tracker</title>
+</head>
+<body>
+    <h1>Scan MO Number (Barcode) and Fetch Data</h1>
+
+    <form method="POST" action="/">
+        <!-- Machine ID (work_center_code) -->
+        <label for="machine_id">Machine ID:</label><br />
+        <input type="text" id="machine_id" name="machine_id" /><br /><br />
+
+        <!-- Colorant Name -->
+        <label for="colorant_name">Colorant Name:</label><br />
+        <input type="text" id="colorant_name" name="colorant_name" /><br /><br />
+
+        <!-- Colorant Description (read-only) -->
+        <label for="colorant_description">Colorant Description:</label><br />
+        <input type="text" id="colorant_description" name="colorant_description" readonly /><br /><br />
+
+        <!-- Required Quantity (read-only) -->
+        <label for="required_quantity">Required Quantity:</label><br />
+        <input type="text" id="required_quantity" name="required_quantity" readonly /><br /><br />
+
+        <!-- MO Number (scanned) -->
+        <label for="mo_number">MO Number:</label><br />
+        <input type="text" id="mo_number" name="mo_number" /><br /><br />
+
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        /**
+         * We'll capture barcode input from a USB scanner that acts like a keyboard:
+         * - The scanner "types" the MO number
+         * - Then sends an "Enter" keystroke
+         */
+        let barcodeBuffer = "";
+        let lastKeyTime = Date.now();
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                // Barcode "Enter" signals the end of the scan
+                event.preventDefault(); // prevent auto-submit
+
+                const moNumber = barcodeBuffer.trim();
+                barcodeBuffer = "";  // Reset buffer for next scan
+
+                if (moNumber) {
+                    // Put scanned MO Number in the mo_number field
+                    document.getElementById("mo_number").value = moNumber;
+
+                    // Fetch details from server
+                    fetchColorantInfo(moNumber);
+                }
+            } else {
+                // If there's a long gap, treat it as a new scan
+                let currentTime = Date.now();
+                if (currentTime - lastKeyTime > 200) {
+                    barcodeBuffer = "";
+                }
+                lastKeyTime = currentTime;
+
+                // Only capture single-character keys (alphanumeric, etc.)
+                if (event.key.length === 1) {
+                    barcodeBuffer += event.key;
+                }
+            }
+        });
+
+        function fetchColorantInfo(moNumber) {
+            fetch("/get_colorant_info", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ mo_number: moNumber })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById("machine_id").value          = data.machine_id;
+                    document.getElementById("colorant_name").value       = data.colorant_name;
+                    document.getElementById("colorant_description").value= data.colorant_description;
+                    document.getElementById("required_quantity").value   = data.required_quantity;
+                } else {
+                    alert(data.error || "No data found for that MO Number.");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Error fetching colorant info: " + err);
+            });
+        }
+    </script>
+</body>
+</html>
