@@ -22,7 +22,7 @@ socketio = SocketIO(app)  # Initialize SocketIO for real-time communication
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',
+    'password': '*********',
     'db': 'colorant_tracker'
 }
 
