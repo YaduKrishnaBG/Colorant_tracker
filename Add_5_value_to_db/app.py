@@ -7,7 +7,7 @@ app = Flask(__name__)
 DB_CONFIG = {
     'host': '10.0.60.30',
     'user': 'colorant',
-    'password': 'C0l0r@nt*66',
+    'password': '**********',
     'database': 'colorant_tracker'
 }
 
