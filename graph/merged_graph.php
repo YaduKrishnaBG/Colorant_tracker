@@ -4,7 +4,7 @@
 // Database configuration
 define('DB_SERVER', '10.0.60.30');
 define('DB_USERNAME', 'colorant');
-define('DB_PASSWORD', 'C0l0r@nt*66');
+define('DB_PASSWORD', '**********');
 define('DB_NAME', 'colorant_tracker');
 
 // Establish a database connection
